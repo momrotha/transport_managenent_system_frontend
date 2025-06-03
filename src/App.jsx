@@ -1,61 +1,37 @@
-import './App.css';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import LoginComponent from './components/LoginComponent';
-import SignUpComponent from './components/SignUpComponent';
-import CustomerAdmin from './components/CustomerAdmin';
-import DriverAdmin from './components/DriverAdmin';
-import AvailableCars from './components/AvailableCars';
-import NotFound from './components/NotFound';
-import AdminLayout from './components/layout/AdminLayout';
-
-const isAuthenticated = () => {
-  return localStorage.getItem('token') !== null;
-};
-
-const PrivateRoute = ({ children }) => {
-  return isAuthenticated() ? children : <Navigate to="/login" />;
-};
+import { Routes, Route } from "react-router-dom";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import CustomerDashboard from "./pages/CustomerDashboard";
+import DriverDashboard from "./pages/DriverDashboard";
+import NotFoundPage from "./pages/NotFoundPage";
+import PrivateRoute from "./components/PrivateRoute";
+import { AuthProvider } from "./hooks/useAuth.jsx";
 
 function App() {
   return (
-    <Router>
+    <AuthProvider>
       <Routes>
-        {/* Root path redirect based on login */}
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route
-          path="/"
+          path="/customer-dashboard"
           element={
-            isAuthenticated() ? <Navigate to="/admin/driver" /> : <Navigate to="/login" />
-          }
-        />
-
-        <Route path="/login" element={<LoginComponent />} />
-        <Route path="/signup" element={<SignUpComponent />} />
-        <Route path="/availableCar" element={<AvailableCars />} />
-
-        <Route
-          path="/admin/customer"
-          element={
-            <PrivateRoute>
-              <AdminLayout>
-                <CustomerAdmin />
-              </AdminLayout>
+            <PrivateRoute allowedUserType="customer">
+              <CustomerDashboard />
             </PrivateRoute>
           }
         />
         <Route
-          path="/admin/driver"
+          path="/driver-dashboard"
           element={
-            <PrivateRoute>
-              <AdminLayout>
-                <DriverAdmin />
-              </AdminLayout>
+            <PrivateRoute allowedUserType="driver">
+              <DriverDashboard />
             </PrivateRoute>
           }
         />
-
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<NotFoundPage />} /> {/* 404 Page */}
       </Routes>
-    </Router>
+    </AuthProvider>
   );
 }
 
