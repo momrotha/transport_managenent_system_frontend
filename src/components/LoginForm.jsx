@@ -9,10 +9,9 @@ const LoginForm = () => {
   const { signIn, user } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if user is already logged in
   useEffect(() => {
     if (user) {
-      console.log('User already logged in:', user);
+      console.log("User already logged in:", user);
       if (user.user_type === "customer") {
         navigate("/customer-dashboard", { replace: true });
       } else if (user.user_type === "driver") {
@@ -23,30 +22,29 @@ const LoginForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Clear previous errors
+    setError("");
 
     try {
-      console.log('Attempting login with email:', email);
+      console.log("Attempting login with email:", email);
       const result = await signIn(email, password);
-      console.log('Login result:', result);
+      console.log("Login result:", result);
 
       if (result.success) {
-        console.log('Login successful, user type:', result.user_type);
-        
+        console.log("Login successful, user type:", result.user_type);
+
         if (!result.user_type) {
-          console.error('No user_type in result');
-          setError('Missing user type information');
+          console.error("No user_type in result");
+          setError("Missing user type information");
           return;
         }
 
-        // Navigation will be handled by the useEffect hook when user state updates
-        console.log('Waiting for user state update to trigger navigation...');
+        console.log("Waiting for user state update to trigger navigation...");
       } else {
-        console.error('Login failed:', result.error);
+        console.error("Login failed:", result.error);
         setError(result.error || "Invalid credentials");
       }
     } catch (err) {
-      console.error('Login error:', err);
+      console.error("Login error:", err);
       setError("An unexpected error occurred");
     }
   };

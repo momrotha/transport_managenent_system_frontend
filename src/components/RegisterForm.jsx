@@ -10,14 +10,12 @@ const RegisterForm = () => {
     password: "",
     password_confirmation: "",
     phone_number: "",
-    user_type: "customer", // Default to customer
+    user_type: "customer",
   });
 
-  // State for error and success messages
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  // Get auth functions from our context
   const { signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -30,26 +28,21 @@ const RegisterForm = () => {
     });
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent page reload
-    setError(""); // Clear previous errors
-    setMessage(""); // Clear previous messages
+    e.preventDefault();
+    setError("");
+    setMessage("");
 
-    // Check if passwords match
     if (formData.password !== formData.password_confirmation) {
       setError("Passwords do not match");
       return;
     }
 
     try {
-      // Attempt to sign up
       const result = await signUp(formData);
 
       if (result.success) {
         setMessage(result.message || "Registration successful! Redirecting...");
-
-        // Redirect to home page after 2 seconds
         setTimeout(() => {
           navigate("/");
         }, 2000);
