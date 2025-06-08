@@ -1,26 +1,31 @@
 import React from "react";
 import { useAuth } from "../hooks/useAuth";
+import ProfileCard from "../components/ProfileCard";
+import CurrentBooking from "../components/CurrentBooking";
+import BookingHistory from "../components/BookingHistory";
+import AddBookingForm from "../components/AddBookingForm";
 
 const CustomerDashboard = () => {
-  const { user, signOut } = useAuth();
+  const { signOut } = useAuth();
+
+  const handleSignOut = () => {
+    if (window.confirm("តើអ្នកពិតជាចង់ចាកចេញមែនទេ?")) {
+      signOut();
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-green-100">
-      <div className="bg-white p-8 rounded-lg shadow-md text-center">
-        <h2 className="text-3xl font-bold mb-4 text-green-800">
-          Customer Dashboard
-        </h2>
-        {user && (
-          <p className="text-lg mb-6">
-            Welcome, Customer! Your token:{" "}
-            <span className="font-mono text-sm break-all">{user.token}</span>
-          </p>
-        )}
+    <div className="p-6 max-w-xl mx-auto space-y-8">
+      <ProfileCard />
+      <CurrentBooking />
+      <BookingHistory />
+      <AddBookingForm />
+      <div className="flex justify-center">
         <button
-          onClick={signOut}
-          className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+          onClick={handleSignOut}
+          className="mt-4 px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700"
         >
-          Sign Out
+          ចេញពីប្រព័ន្ធ
         </button>
       </div>
     </div>

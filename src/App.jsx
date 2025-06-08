@@ -11,26 +11,28 @@ function App() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route
-          path="/customer-dashboard"
-          element={
-            <PrivateRoute allowedUserType="customer">
-              <CustomerDashboard />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/driver-dashboard"
-          element={
-            <PrivateRoute allowedUserType="driver">
-              <DriverDashboard />
-            </PrivateRoute>
-          }
-        />
-        <Route path="*" element={<NotFoundPage />} /> {/* 404 Page */}
-      </Routes>
+  <Route path="/" element={<LoginPage />} />
+  <Route path="/login" element={<LoginPage />} /> {/* ✅ fix here */}
+  <Route path="/register" element={<RegisterPage />} />
+  <Route
+    path="/customer-dashboard"
+    element={
+      <PrivateRoute allowedUserType="customer">
+        <CustomerDashboard />
+      </PrivateRoute>
+    }
+  />
+  <Route
+    path="/driver-dashboard"
+    element={
+      <PrivateRoute allowedUserType="driver">
+        <DriverDashboard />
+      </PrivateRoute>
+    }
+  />
+  <Route path="*" element={<NotFoundPage />} />
+</Routes>
+
     </AuthProvider>
   );
 }
