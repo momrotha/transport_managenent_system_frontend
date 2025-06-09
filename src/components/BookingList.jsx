@@ -5,16 +5,22 @@ const BookingList = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
-  const pollingIntervalRef = useRef(null);
+  const pollingRef = useRef(null);
 
+  // <-- Updated API endpoint here -->
   const fetchAvailableBookings = async () => {
+    setLoading(true);
     try {
-      const res = await axios.get("http://127.0.0.1:8000/bookings/available", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setBookings(res.data.data);
+      const res = await axios.get(
+        "http://127.0.0.1:8000/api/driver/bookings",  // <-- change this to your real endpoint
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setBookings(res.data.data || []);
     } catch (err) {
       console.error("Error fetching bookings:", err);
+      setBookings([]); // clear bookings on error
     } finally {
       setLoading(false);
     }
@@ -22,18 +28,21 @@ const BookingList = () => {
 
   useEffect(() => {
     fetchAvailableBookings();
-    pollingIntervalRef.current = setInterval(fetchAvailableBookings, 10000);
-    return () => clearInterval(pollingIntervalRef.current);
+    pollingRef.current = setInterval(fetchAvailableBookings, 10000);
+    return () => clearInterval(pollingRef.current);
   }, []);
 
-  const doAction = async (url, successMsg, errMsg, id) => {
+  const doAction = async (endpoint, successMsg, errMsg, id) => {
     try {
-      await axios.post(url, { id }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.post(
+        `http://127.0.0.1:8000${endpoint}`,
+        { id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       alert(successMsg);
       fetchAvailableBookings();
-    } catch {
+    } catch (err) {
+      console.error(`Error calling ${endpoint}:`, err);
       alert(errMsg);
     }
   };
@@ -48,7 +57,10 @@ const BookingList = () => {
       ) : (
         <div className="space-y-4">
           {bookings.map((b) => (
-            <div key={b.id} className="bg-gray-50 p-4 rounded shadow-sm flex flex-col md:flex-row md:justify-between md:items-center">
+            <div
+              key={b.id}
+              className="bg-gray-50 p-4 rounded shadow-sm flex flex-col md:flex-row md:justify-between md:items-center"
+            >
               <div>
                 <p><strong>ID:</strong> {b.id}</p>
                 <p><strong>Customer:</strong> {b.customer_id}</p>
@@ -56,9 +68,45 @@ const BookingList = () => {
                 <p><strong>Status:</strong> {b.status}</p>
               </div>
               <div className="flex gap-2 mt-4 md:mt-0">
-                <button onClick={() => doAction("http://127.0.0.1:8000/api/driver/accept", "អនុម័តបាន", "មិនអនុម័តបាន", b.id)} className="bg-green-600 text-white px-3 py-1 rounded">✅</button>
-                <button onClick={() => doAction("http://127.0.0.1:8000/api/driver/cancel", "បោះបង់បាន", "មិនបោះបង់បាន", b.id)} className="bg-yellow-600 text-white px-3 py-1 rounded">❌</button>
-                <button onClick={() => doAction("http://127.0.0.1:8000/bookings/complete", "បញ្ចប់បាន", "មិនបានបញ្ចប់", b.id)} className="bg-blue-600 text-white px-3 py-1 rounded">➤</button>
+                <button
+                  onClick={() =>
+                    doAction(
+                      "/api/driver/accept",
+                      "✅ បានអនុម័តការកក់!",
+                      "❌ មិនអនុម័តបាន។",
+                      b.id
+                    )
+                  }
+                  className="bg-green-600 text-white px-3 py-1 rounded"
+                >
+                  ✅
+                </button>
+                <button
+                  onClick={() =>
+                    doAction(
+                      "/api/driver/cancel",
+                      "បានបោះបង់ការកក់!",
+                      "មិនអាចបោះបង់បាន។",
+                      b.id
+                    )
+                  }
+                  className="bg-yellow-600 text-white px-3 py-1 rounded"
+                >
+                  ❌
+                </button>
+                <button
+                  onClick={() =>
+                    doAction(
+                      "/bookings/complete",
+                      "➤ បានបញ្ចប់ដំណើរការ!",
+                      "⚠️ មិនអាចបញ្ចប់បាន។",
+                      b.id
+                    )
+                  }
+                  className="bg-blue-600 text-white px-3 py-1 rounded"
+                >
+                  ➤
+                </button>
               </div>
             </div>
           ))}

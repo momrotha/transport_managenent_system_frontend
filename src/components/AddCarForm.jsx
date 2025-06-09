@@ -1,6 +1,9 @@
 import React, { useState } from "react";
+import axios from "axios";
+import { useAuth } from "../hooks/useAuth";
 
 const AddCarForm = () => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     vehicle_number: "",
     model: "",
@@ -8,59 +11,48 @@ const AddCarForm = () => {
     year: "",
     type: "",
   });
-
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState({ success: "", error: "" });
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem("authToken");
-    setMessage("");
+    setMessage({ success: "", error: "" });
     setErrors({});
+    setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/vehicles", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
+      const res = await axios.post(
+        "http://127.0.0.1:8000/api/vehicles",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${user?.token}`,
+          },
+        }
+      );
 
-      const contentType = response.headers.get("content-type");
-
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text();
-        setMessage("❌ Server returned non-JSON: " + text.slice(0, 100));
-        return;
-      }
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage("✅ រថយន្តត្រូវបានបញ្ចូលដោយជោគជ័យ");
-        setFormData({
-          vehicle_number: "",
-          model: "",
-          color: "",
-          year: "",
-          type: "",
-        });
-      } else if (response.status === 422) {
-        setErrors(data.errors || {});
+      setMessage({ success: "✅ រថយន្តត្រូវបានបញ្ចូលដោយជោគជ័យ", error: "" });
+      setFormData({ vehicle_number: "", model: "", color: "", year: "", type: "" });
+    } catch (err) {
+      if (err.response) {
+        const { status, data } = err.response;
+        if (status === 422 && data.errors) {
+          setErrors(data.errors);
+        } else if (data.message) {
+          setMessage({ success: "", error: `❌ ${data.message}` });
+        } else {
+          setMessage({ success: "", error: "❌ មានបញ្ហាផ្សេងៗ។ សូមព្យាយាមម្ដងទៀត" });
+        }
       } else {
-        setMessage("❌ បញ្ហាផ្សេងៗ: " + (data.message || "Unknown error"));
+        setMessage({ success: "", error: `❌ សម្គាល់កំហុស connection: ${err.message}` });
       }
-    } catch (error) {
-      setMessage("❌ បញ្ហា connection: " + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -68,72 +60,37 @@ const AddCarForm = () => {
     <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded shadow-md">
       <h2 className="text-xl font-bold">បញ្ចូលព័ត៌មានរថយន្ត</h2>
 
-      <div>
-        <label className="block">លេខផ្ទាំង</label>
-        <input
-          type="text"
-          name="vehicle_number"
-          value={formData.vehicle_number}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        />
-        {errors.vehicle_number && (
-          <p className="text-red-500">{errors.vehicle_number[0]}</p>
-        )}
-      </div>
+      {message.error && <p className="text-red-600">{message.error}</p>}
+      {message.success && <p className="text-green-600">{message.success}</p>}
 
-      <div>
-        <label className="block">ម៉ូដែល</label>
-        <input
-          type="text"
-          name="model"
-          value={formData.model}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        />
-        {errors.model && <p className="text-red-500">{errors.model[0]}</p>}
-      </div>
-
-      <div>
-        <label className="block">ពណ៌</label>
-        <input
-          type="text"
-          name="color"
-          value={formData.color}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        />
-      </div>
-
-      <div>
-        <label className="block">ឆ្នាំផលិត</label>
-        <input
-          type="number"
-          name="year"
-          value={formData.year}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        />
-      </div>
-
-      <div>
-        <label className="block">ប្រភេទ</label>
-        <input
-          type="text"
-          name="type"
-          value={formData.type}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        />
-      </div>
-
-      {message && <p className="mt-2 text-blue-600">{message}</p>}
+      {[
+        {label: "លេខផ្ទាំង", name: "vehicle_number", type: "text"},
+        {label: "ម៉ូដែល", name: "model", type: "text"},
+        {label: "ពណ៌", name: "color", type: "text"},
+        {label: "ឆ្នាំផលិត", name: "year", type: "number"},
+        {label: "ប្រភេទ", name: "type", type: "text"},
+      ].map(({label, name, type}) => (
+        <div key={name}>
+          <label className="block mb-1">{label}</label>
+          <input
+            type={type}
+            name={name}
+            value={formData[name]}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+          />
+          {errors[name] && <p className="text-red-500">{errors[name][0]}</p>}
+        </div>
+      ))}
 
       <button
         type="submit"
-        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        disabled={loading}
+        className={`px-4 py-2 rounded text-white ${
+          loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
+        }`}
       >
-        បញ្ចូលរថយន្ត
+        {loading ? "កំពុងដំណើរការ..." : "បញ្ចូលរថយន្ត"}
       </button>
     </form>
   );

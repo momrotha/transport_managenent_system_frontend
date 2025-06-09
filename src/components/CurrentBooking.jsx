@@ -12,45 +12,63 @@ const CurrentBooking = () => {
 
   useEffect(() => {
     const fetchBooking = async () => {
+      if (!user?.token) return;
+      setLoading(true);
       try {
-        setLoading(true);
-        const res = await axios.get("http://127.0.0.1:8000/api/booking/current", {
-          headers: { Authorization: `Bearer ${user?.token}` },
-        });
+        const res = await axios.get(
+          "http://127.0.0.1:8000/api/booking/current",
+          {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }
+        );
         setBooking(res.data.data);
       } catch (err) {
         console.error("Fetch booking error", err);
+        setMessage({
+          error: "មិនអាចយកការកក់បាន សូមព្យាយាមម្ដងទៀត",
+          success: "",
+        });
       } finally {
         setLoading(false);
       }
     };
 
-    if (user?.token) fetchBooking();
+    fetchBooking();
   }, [user]);
 
   const handleCancel = async () => {
     if (!booking) return;
     setCancelLoading(true);
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/booking/${booking.id}`, {
-        headers: { Authorization: `Bearer ${user?.token}` },
-      });
-      setMessage({ success: "ការកក់ត្រូវបានបោះបង់ដោយជោគជ័យ", error: "" });
+      const res = await axios.post(
+        "http://127.0.0.1:8000/api/customer-cancel",
+        { id: booking.id },
+        {
+          headers: { Authorization: `Bearer ${user?.token}` },
+        }
+      );
       setBooking(null);
+      setMessage({
+        success: "ការកក់ត្រូវបានបោះបង់ដោយជោគជ័យ",
+        error: "",
+      });
     } catch (err) {
-      setMessage({ success: "", error: "មិនអាចបោះបង់បាន សូមព្យាយាមម្ដងទៀត" });
+      console.error("Cancel error", err);
+      setMessage({
+        success: "",
+        error: "មិនអាចបោះបង់បាន សូមព្យាយាមម្ដងទៀត",
+      });
     } finally {
       setCancelLoading(false);
     }
   };
 
-  if (loading)
-    return (
-      <div className="flex justify-center py-6">
-        <div className="loader border-4 border-blue-600 border-t-transparent rounded-full w-8 h-8 animate-spin"></div>
-        <style>{`.loader { border-top-color: transparent; animation: spin 1s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
+  if (loading) return (
+    <div className="flex justify-center py-6">
+      <div className="loader border-4 border-blue-600 border-t-transparent rounded-full w-8 h-8 animate-spin"></div>
+      <style>{`.loader { border-top-color: transparent; animation: spin 1s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 
   return (
     <div className="bg-white shadow-md rounded p-6">
